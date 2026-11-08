@@ -1,26 +1,28 @@
-# JARVIS by Ady 🤖
+# JARVIS by Ady — Android starter
 
-### Your Independent Artificial Personal Assistant
+An Android-first personal assistant starter for Ady's Motorola phone.
 
-JARVIS is a personal AI assistant being built
-from scratch for Android.
+## What is included
+- Native Kotlin Android app
+- Hindi speech input via Android speech recognizer
+- Hindi text-to-speech
+- Chat interface
+- Optional connection to a private AI backend
+- GitHub Actions workflow to build a debug APK
 
-## Our Vision
-- Natural Hindi and English conversations
-- Voice-based interaction
-- Personal memory
-- Smart reminders and tasks
-- Internet research
-- Android automation
-- Secure personal data
+## Important setup
+The app expects a backend URL that accepts `POST /chat` with JSON `{ "message": "..." }`
+and returns JSON containing `reply`. Do not put a Gemini API key inside the Android app.
 
-## Technology
-- Android
-- Kotlin
-- Gemini AI (initial AI engine)
-- Custom JARVIS Core
+The current screen is a foundation build. It does not yet have persistent cloud memory,
+wake-word listening, background automation, or direct phone-control permissions.
 
-## Developer
-Aditya Kumar
+## Build APK
+Push this project to GitHub. Open **Actions** → **Build JARVIS APK**. When the workflow
+finishes, open the run and download the `JARVIS-ADY-debug-apk` artifact.
 
-**Project Status:** Initial Development 🚀
+## Backend
+Deploy a secure server/Cloudflare Worker that stores the Gemini API key as a secret and
+implements `/chat`. Add its base URL to the app's backend setting when that setting is
+implemented in the next build. For this first foundation build, the URL is read from the
+app's private preference `worker_url`; a setup screen will be added next.
