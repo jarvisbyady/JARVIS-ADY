@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS by Ady</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;background:#07111f;color:#eaf6ff;
+  font-family:Arial,sans-serif;min-height:100vh;
+  display:flex;justify-content:center;align-items:center;
+}
+.app{
+  width:100%;max-width:600px;min-height:100vh;
+  padding:22px;display:flex;flex-direction:column;
+}
+header{text-align:center;padding:24px 0}
+h1{color:#42d9ff;letter-spacing:5px;font-size:32px;margin:8px}
+header p{color:#8ca9bd;font-size:13px}
+#chat{
+  flex:1;overflow-y:auto;padding:12px 0;
+  display:flex;flex-direction:column;gap:14px;
+}
+.msg{
+  padding:13px 16px;border-radius:15px;
+  max-width:90%;line-height:1.5;white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.user{align-self:flex-end;background:#124a68}
+.bot{align-self:flex-start;background:#14283b}
+.controls{display:flex;gap:8px;margin-top:15px}
+input{
+  flex:1;min-width:0;padding:15px;border-radius:12px;
+  border:1px solid #31516b;background:#102235;
+  color:white;font-size:16px;
+}
+button{
+  border:0;border-radius:12px;padding:12px 15px;
+  background:#16bce8;color:#00131e;font-weight:bold;
+  font-size:15px;
+}
+button:disabled{opacity:.5}
+#status{text-align:center;color:#8ca9bd;font-size:12px;margin:12px}
+footer{text-align:center;color:#607b90;font-size:11px;padding:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>J.A.R.V.I.S</h1>
+    <p>PERSONAL AI ASSISTANT · BY ADY</p>
+  </header>
+
+  <main id="chat">
+    <div class="msg bot">Hello Ady! I am JARVIS. How can I help you today?</div>
+  </main>
+
+  <div id="status">Ready</div>
+
+  <div class="controls">
+    <input id="message" type="text" placeholder="Ask JARVIS anything..." />
+    <button id="mic" type="button">🎙️</button>
+    <button id="send" type="button">Send</button>
+  </div>
+
+  <footer>JARVIS · Your personal AI assistant</footer>
+</div>
+
+<script>
+const API_URL = "https://jarvis-ady.aadityaakumaarr-9fe.workers.dev/chat";
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("message");
+const send = document.getElementById("send");
+const mic = document.getElementById("mic");
+const status = document.getElementById("status");
+
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+async function askJarvis() {
+  const message = input.value.trim();
+  if (!message) return;
+
+  addMessage(message, "user");
+  input.value = "";
+  send.disabled = true;
+  status.textContent = "JARVIS is thinking...";
+
+  const replyBox = addMessage("Please wait...", "bot");
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message})
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Request failed");
+    }
+
+    replyBox.textContent = data.reply || "No reply received.";
+    status.textContent = "Ready";
+
+    if ("speechSynthesis" in window && data.reply) {
+      speechSynthesis.cancel();
+      const speech = new SpeechSynthesisUtterance(data.reply);
+      speech.lang = "en-IN";
+      speech.rate = 1;
+      speechSynthesis.speak(speech);
+    }
+
+  } catch (error) {
+    replyBox.textContent = "Sorry Ady, connection failed. Please try again.";
+    status.textContent = "Connection error";
+  } finally {
+    send.disabled = false;
+    input.focus();
+  }
+}
+
+send.addEventListener("click", askJarvis);
+
+input.addEventListener("keydown", function(event) {
+  if (event.key === "Enter") askJarvis();
+});
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.interimResults = false;
+
+  mic.addEventListener("click", function() {
+    status.textContent = "Listening...";
+    recognition.start();
+  });
+
+  recognition.onresult = function(event) {
+    input.value = event.results[0][0].transcript;
+    status.textContent = "Voice captured";
+  };
+
+  recognition.onerror = function() {
+    status.textContent = "Microphone error";
+  };
+
+  recognition.onend = function() {
+    if (status.textContent === "Listening...") {
+      status.textContent = "Ready";
+    }
+  };
+} else {
+  mic.disabled = true;
+  mic.title = "Voice input is not supported in this browser";
+}
+</script>
+</body>
+</html>
